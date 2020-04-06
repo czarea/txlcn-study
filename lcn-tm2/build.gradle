@@ -1,0 +1,6 @@
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    //tx-lcn
+    implementation('com.codingapi.txlcn:txlcn-tm:5.0.2.RELEASE')
+}

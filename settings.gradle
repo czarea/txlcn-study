@@ -1,0 +1,8 @@
+rootProject.name = 'txlcn-study'
+include 'account'
+include 'member'
+include 'common'
+include 'lcn-tm1'
+include 'stock'
+include 'lcn-tm2'
+

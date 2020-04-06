@@ -1,0 +1,25 @@
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(":common")
+
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    implementation('org.springframework.boot:spring-boot-starter-actuator')
+
+    //db
+    implementation("com.baomidou:mybatis-plus-boot-starter:${mybatisPlus}")
+    implementation('mysql:mysql-connector-java')
+
+    //tx-lcn
+    implementation('com.codingapi.txlcn:txlcn-tc:5.0.2.RELEASE')
+    implementation('com.codingapi.txlcn:txlcn-txmsg-netty:5.0.2.RELEASE')
+
+    //nacos
+    implementation('org.springframework.cloud:spring-cloud-starter-alibaba-nacos-discovery')
+    implementation('org.springframework.cloud:spring-cloud-starter-alibaba-nacos-config')
+
+
+    //feign hystrix
+    implementation('org.springframework.cloud:spring-cloud-starter-netflix-hystrix')
+    implementation('org.springframework.cloud:spring-cloud-starter-openfeign')
+}

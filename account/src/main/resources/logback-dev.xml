@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>debug</level>
+    </filter>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="debug">
+    <appender-ref ref="console" />
+  </root>
+  <logger name="ch.qos.logback.classic"  level="info" />
+  <logger name="org.springframework"  level="info" />
+  <Logger name="org.apache.http" level="info" />
+  <Logger name="com.netflix" level="info" />
+  <Logger name="com.codingapi.txlcn.txmsg.netty.handler" level="info" />
+  <Logger name="com.alibaba.nacos" level="error" />
+  <Logger name="io.lettuce.core" level="info" />
+  <Logger name="com.zaxxer.hikari.pool" level="info" />
+</configuration>

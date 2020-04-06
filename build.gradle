@@ -1,0 +1,81 @@
+buildscript {
+    ext {
+        springBootVersion = '2.2.6.RELEASE'
+    }
+    repositories {
+        mavenLocal()
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+allprojects {
+    group 'com.area'
+    version = '1.0'
+}
+
+
+ext {
+    springCloudVersion = "Hoxton.SR3"
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'jacoco'
+    apply plugin: 'io.spring.dependency-management'
+
+
+    version = '1.0.0'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+    ext {
+        nacos = "0.2.1.RELEASE"
+        mybatisPlus = "3.1.0"
+        fastjson = "1.2.51"
+        commonsPool2 = "2.6.1"
+    }
+
+    repositories {
+        mavenLocal()
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.projectlombok:lombok:1.18.6'
+        annotationProcessor 'org.projectlombok:lombok:1.18.6'
+
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+        resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-alibaba-dependencies:${nacos}"
+        }
+        imports {
+            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+        }
+    }
+}

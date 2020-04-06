@@ -1,0 +1,16 @@
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/*Mapper.xml
+  typeAliasesPackage: com.czarea.txlcn
+  global-config:
+    db-config:
+      id-type: auto
+      field-strategy: default
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      capital-mode: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    lazyLoadingEnabled: true
+    jdbcTypeForNull: null
+    multipleResultSetsEnabled: true

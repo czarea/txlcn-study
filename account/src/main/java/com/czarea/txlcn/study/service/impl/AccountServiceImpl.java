@@ -42,11 +42,31 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
         ProductDTO productDTO = new ProductDTO();
         productDTO.setId(productId);
-        productDTO.setNumber((int) (Math.random() * 10) + 1);
+        productDTO.setNumber(5);
 
         stockFeignClient.reduce(productDTO);
 
         if (point.getPoint() % 7 == 0) {
+            throw new IllegalAccessException("mock exception!");
+        }
+    }
+
+    @LcnTransaction
+    @Override
+    public void tccConsume(Double amount, Long userId, Long productId) throws IllegalAccessException {
+        Account entity = new Account();
+        entity.setAmount(amount);
+        entity.setUserId(userId);
+        baseMapper.insert(entity);
+
+        int point = (int) (amount * 10);
+
+        ProductDTO productDTO = new ProductDTO();
+        productDTO.setId(productId);
+        productDTO.setNumber(5);
+        stockFeignClient.tccReduce(productDTO);
+
+        if (point % 7 == 0) {
             throw new IllegalAccessException("mock exception!");
         }
     }

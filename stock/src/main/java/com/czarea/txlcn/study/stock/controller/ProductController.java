@@ -24,4 +24,10 @@ public class ProductController {
     public int reduce(@RequestBody ProductDTO productDTO) {
         return productService.reduce(productDTO);
     }
+
+    @PostMapping("/tcc/reduce")
+    public int tccReduce(@RequestBody ProductDTO productDTO) {
+        return productService.tccReduce(productDTO);
+    }
+
 }

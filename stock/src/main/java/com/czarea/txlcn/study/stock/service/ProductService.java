@@ -10,4 +10,10 @@ import com.czarea.txlcn.study.stock.entity.Product;
 public interface ProductService extends IService<Product> {
 
     int reduce(ProductDTO productDTO);
+
+    int tccReduce(ProductDTO productDTO);
+
+    int cancelTccReduce(ProductDTO productDTO);
+
+    int confirmTccReduce(ProductDTO productDTO);
 }

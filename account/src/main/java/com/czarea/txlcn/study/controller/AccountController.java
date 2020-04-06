@@ -22,4 +22,12 @@ public class AccountController {
         accountService.consume(amount, userId,productId);
         return "OK";
     }
+
+    @RequestMapping("/tcc/consume")
+    public String tccConsume(Long userId, Double amount,Long productId) throws IllegalAccessException {
+        accountService.tccConsume(amount, userId,productId);
+        return "OK";
+    }
+
+
 }

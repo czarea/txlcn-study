@@ -1,4 +1,7 @@
-# tx-lcn 分布式事务学习
+# tx-lcn
+
+tx-lcn 分布式事务应用简单，性能还ok，但是依赖redis，设计上也有一些缺陷的地方，但是可以作为入门级的分布式好事务来学习，tx-lcn支撑LCN、TCC、TXC三种模式。
+
 
 项目依赖
 1. nacos
@@ -7,311 +10,70 @@
 
 ## CAP & BASE
 
-[分布式事务 & CAP & BASE](http://www.pbteach.com/post/java_distribut/subject_dtx-01/)
+CAP指在分布式系统中：Consistency（一致性）、 Availability（可用性）、Partition tolerance（分区容错性），三者不可得兼。
+
+### 一致性（C）
+    在分布式系统中的所有数据备份，在同一时刻是否同样的值。（等同于所有节点访问同一份最新的数据副本）
+
+### 可用性（A）
+    在集群中一部分节点故障后，集群整体是否还能响应客户端的读写请求。（对数据更新具备高可用性）
+
+### 分区容错性（P）
+    以实际效果而言，分区相当于对通信的时限要求。系统如果不能在时限内达成数据一致性，就意味着发生了分区的情况，必须就当前操作在C和A之间做出选择。
+
+BASE是Basically Available（基本可用）、Soft state（软状态）和 Eventually consistent（最终一致性）三个短语的缩写。BASE理论是对CAP中一致性和可用性权衡的结果，其来源于对大规模互联网系统分布式实践的总结， 是基于CAP定理逐步演化而来的。BASE理论的核心思想是：即使无法做到强一致性，但每个应用都可以根据自身业务特点，采用适当的方式来使系统达到最终一致性。
+
+### 基本可用
+
+基本可用是指分布式系统在出现不可预知故障的时候，允许损失部分可用性----注意，这绝不等价于系统不可用。比如：
+
+（1）响应时间上的损失。正常情况下，一个在线搜索引擎需要在0.5秒之内返回给用户相应的查询结果，但由于出现故障，查询结果的响应时间增加了1~2秒
+
+（2）系统功能上的损失：正常情况下，在一个电子商务网站上进行购物的时候，消费者几乎能够顺利完成每一笔订单，但是在一些节日大促购物高峰的时候，由于消费者的购物行为激增，为了保护购物系统的稳定性，部分消费者可能会被引导到一个降级页面
+
+### 软状态
+
+    软状态指允许系统中的数据存在中间状态，并认为该中间状态的存在不会影响系统的整体可用性，即允许系统在不同节点的数据副本之间进行数据同步的过程存在延时
+
+### 最终一致性
+
+    最终一致性强调的是所有的数据副本，在经过一段时间的同步之后，最终都能够达到一个一致的状态。因此，最终一致性的本质是需要系统保证最终数据能够达到一致，而不需要实时保证系统数据的强一致性。
+
+[更详细请参考：分布式事务 & CAP & BASE](http://www.pbteach.com/post/java_distribut/subject_dtx-01/)
 
 
-tx-lcn 分布式事务应用简单，性能还ok，但是依赖redis，设计上也有一些缺陷的地方，但是可以作为入门级的分布式好事务来学习，tx-lcn支撑LCN、TCC、TXC三种模式。
 
 ## TM
 
 分布式事务协调中心，记录各节点事务日志，事务补充等。依赖Netty、Redis。
 
-## 1. LCN
+## LCN
+
+tx-lcn 分布式事务应用简单，性能还ok，但是依赖redis，设计上也有一些缺陷的地方，但是可以作为入门级的分布式好事务来学习，tx-lcn支撑LCN、TCC、TXC三种模式。
+
+特点：
+
+- 该模式对代码的嵌入性为低。
+- 该模式仅限于本地存在连接对象且可通过连接对象控制事务的模块。
+- 该模式下的事务提交与回滚是由本地事务方控制，对于数据一致性上有较高的保障。
+- 该模式缺陷在于代理的连接需要随事务发起方一共释放连接，增加了连接占用的时间。
 
 
+## TCC
+TCC事务机制相对于传统事务机制（X/Open XA Two-Phase-Commit），其特征在于它不依赖资源管理器(RM)对XA的支持，而是通过对（由业务系统提供的）业务逻辑的调度来实现分布式事务。主要由三步操作，Try: 尝试执行业务、 Confirm:确认执行业务、 Cancel: 取消执行业务。
 
-LCN模式类似为2PC的分布式解决方案，2PC先天有些缺陷，比如超时和锁的问题，所以会引入3PC，有关2PC和3PC可以详细阅读[分布式事务常用解决方案](http://www.pbteach.com/post/java_distribut/subject_dtx-02/)。LCN不是传统意义上的2PC，但是有些类似。其本质是代理数据库连接，利用切面编程，业务代码顺利执行完成得到connection提交的事务的时候并不做任何事情，而是通知TM，TM再通知每个事物单元完成事务的提交或者回滚。
+特点：
 
-1、启用注解类EnableDistributedTransaction
+- 该模式对代码的嵌入性高，要求每个业务需要写三种步骤的操作。
+- 该模式对有无本地事务控制都可以支持使用面广。
+- 数据一致性控制几乎完全由开发者控制，对业务开发难度要求高
 
-做了以下工作
+## TXC
+TXC模式命名来源于淘宝，实现原理是在执行SQL之前，先查询SQL的影响数据，然后保存执行的SQL快走信息和创建锁。当需要回滚的时候就采用这些记录数据回滚数据库，目前锁实现依赖redis分布式锁控制。
 
+特点：
 
-序列 | 内容
----|---
-1  | 启用切面LcnTransaction等
-2  | 启动Netty服务
-3  | 注入Tracing跟踪相关类，主要是在springcloud或dubbo RPC 请求过程中在事物单元中加入全局事务groupId等
-4  | 启动日志相关类
-5  | 启用数据相关类比如QueryRunner
-
-
-
-2、核心代码LcnConnectionProxy
-```
-public class LcnConnectionProxy implements Connection {
-    @Override
-    public void commit() throws SQLException {
-        //connection.commit();
-    }
-
-    @Override
-    public void rollback() throws SQLException {
-        //connection.rollback();
-    }
-
-    @Override
-    public void close() throws SQLException {
-        //connection.close();
-    }
-    /**
-     * notify connection
-     *
-     * @param state transactionState
-     * @return RpcResponseState RpcResponseState
-     */
-    public RpcResponseState notify(int state) {
-        try {
-            if (state == 1) {
-                log.debug("commit transaction type[lcn] proxy connection:{}.", this);
-                connection.commit();
-            } else {
-                log.debug("rollback transaction type[lcn] proxy connection:{}.", this);
-                connection.rollback();
-            }
-            connection.close();
-            log.debug("transaction type[lcn] proxy connection:{} closed.", this);
-            return RpcResponseState.success;
-        } catch (Exception e) {
-            log.error(e.getLocalizedMessage(), e);
-            return RpcResponseState.fail;
-        }
-    }
-    .....
-}
-```
-
-上面notify是收到TM的通知后真实执行的事务操作
-
-
-3、DTXLogicWeaver 切面业务执行
-```
-    public Object runTransaction(DTXInfo dtxInfo, BusinessCallback business) throws Throwable {
-
-        if (Objects.isNull(DTXLocalContext.cur())) {
-            DTXLocalContext.getOrNew();
-        } else {
-            return business.call();
-        }
-
-        log.debug("<---- TxLcn start ---->");
-        DTXLocalContext dtxLocalContext = DTXLocalContext.getOrNew();
-        TxContext txContext;
-        // ---------- 保证每个模块在一个DTX下只会有一个TxContext ---------- //
-        if (globalContext.hasTxContext()) {
-            // 有事务上下文的获取父上下文
-            txContext = globalContext.txContext();
-            dtxLocalContext.setInGroup(true);
-            log.debug("Unit[{}] used parent's TxContext[{}].", dtxInfo.getUnitId(), txContext.getGroupId());
-        } else {
-            // 没有的开启本地事务上下文
-            txContext = globalContext.startTx();
-        }
-
-        // 本地事务调用
-        if (Objects.nonNull(dtxLocalContext.getGroupId())) {
-            dtxLocalContext.setDestroy(false);
-        }
-
-        dtxLocalContext.setUnitId(dtxInfo.getUnitId());
-        dtxLocalContext.setGroupId(txContext.getGroupId());
-        dtxLocalContext.setTransactionType(dtxInfo.getTransactionType());
-
-        // 事务参数
-        TxTransactionInfo info = new TxTransactionInfo();
-        info.setBusinessCallback(business);
-        info.setGroupId(txContext.getGroupId());
-        info.setUnitId(dtxInfo.getUnitId());
-        info.setPointMethod(dtxInfo.getBusinessMethod());
-        info.setPropagation(dtxInfo.getTransactionPropagation());
-        info.setTransactionInfo(dtxInfo.getTransactionInfo());
-        info.setTransactionType(dtxInfo.getTransactionType());
-        info.setTransactionStart(txContext.isDtxStart());
-
-        //LCN事务处理器
-        try {
-            return transactionServiceExecutor.transactionRunning(info);
-        } finally {
-            // 线程执行业务完毕清理本地数据
-            if (dtxLocalContext.isDestroy()) {
-                // 通知事务执行完毕
-                synchronized (txContext.getLock()) {
-                    txContext.getLock().notifyAll();
-                }
-
-                // TxContext生命周期是？ 和事务组一样（不与具体模块相关的）
-                if (!dtxLocalContext.isInGroup()) {
-                    globalContext.destroyTx();
-                }
-
-                DTXLocalContext.makeNeverAppeared();
-                TracingContext.tracing().destroy();
-            }
-            log.debug("<---- TxLcn end ---->");
-        }
-    }
-```
-
-1. 生成 DTXLocalContext
-2. 生成TxTransactionInfo，包含实际业务代码method
-
-4、DTXServiceExecutor
-```
-    public Object transactionRunning(TxTransactionInfo info) throws Throwable {
-
-        // 1. 获取事务类型
-        String transactionType = info.getTransactionType();
-
-        // 2. 获取事务传播状态
-        DTXPropagationState propagationState = propagationResolver.resolvePropagationState(info);
-
-        // 2.1 如果不参与分布式事务立即终止
-        if (propagationState.isIgnored()) {
-            return info.getBusinessCallback().call();
-        }
-
-        // 3. 获取本地分布式事务控制器
-        DTXLocalControl dtxLocalControl = txLcnBeanHelper.loadDTXLocalControl(transactionType, propagationState);
-
-        // 4. 织入事务操作
-        try {
-            // 4.1 记录事务类型到事务上下文
-            Set<String> transactionTypeSet = globalContext.txContext(info.getGroupId()).getTransactionTypes();
-            transactionTypeSet.add(transactionType);
-
-            dtxLocalControl.preBusinessCode(info);
-
-            // 4.2 业务执行前
-            txLogger.txTrace(
-                    info.getGroupId(), info.getUnitId(), "pre business code, unit type: {}", transactionType);
-
-            // 4.3 执行业务
-            Object result = dtxLocalControl.doBusinessCode(info);
-
-            // 4.4 业务执行成功
-            txLogger.txTrace(info.getGroupId(), info.getUnitId(), "business success");
-            dtxLocalControl.onBusinessCodeSuccess(info, result);
-            return result;
-        } catch (TransactionException e) {
-            txLogger.error(info.getGroupId(), info.getUnitId(), "before business code error");
-            throw e;
-        } catch (Throwable e) {
-            // 4.5 业务执行失败
-            txLogger.error(info.getGroupId(), info.getUnitId(), Transactions.TAG_TRANSACTION,
-                    "business code error");
-            dtxLocalControl.onBusinessCodeError(info, e);
-            throw e;
-        } finally {
-            // 4.6 业务执行完毕
-            dtxLocalControl.postBusinessCode(info);
-        }
-    }
-
-```
-
-1. 获取事务传播级别
-2. 通知TM创建事务组
-3. 执行业务代码
-4. 事务淡远加入到事务组
-
-5、RpcAnswerHandler & DefaultNotifiedUnitService
-```
-    @Override
-    public Serializable execute(TransactionCmd transactionCmd) throws TxClientException {
-        try {
-            NotifyUnitParams notifyUnitParams = transactionCmd.getMsg().loadBean(NotifyUnitParams.class);
-            // 保证业务线程执行完毕后执行事务清理操作
-            TxContext txContext = globalContext.txContext(transactionCmd.getGroupId());
-            if (Objects.nonNull(txContext)) {
-                synchronized (txContext.getLock()) {
-                    txLogger.txTrace(transactionCmd.getGroupId(), notifyUnitParams.getUnitId(),
-                            "clean transaction cmd waiting for business code finish.");
-                    txContext.getLock().wait();
-                }
-            }
-            // 事务清理操作
-            transactionCleanTemplate.clean(
-                    notifyUnitParams.getGroupId(),
-                    notifyUnitParams.getUnitId(),
-                    notifyUnitParams.getUnitType(),
-                    notifyUnitParams.getState());
-            return true;
-        } catch (TransactionClearException | InterruptedException e) {
-            throw new TxClientException(e);
-        }
-    }
-```
-
-1. 接受TM的指定：执行事务提交还是事务回滚
-
-6、SimpleDTXChecking，定期检查事物状态跟TM连接
-```
-    @Override
-    public void startDelayCheckingAsync(String groupId, String unitId, String transactionType) {
-        txLogger.taskTrace(groupId, unitId, "start delay checking task");
-        ScheduledFuture scheduledFuture = scheduledExecutorService.schedule(() -> {
-            try {
-                TxContext txContext = globalContext.txContext(groupId);
-                if (Objects.nonNull(txContext)) {
-                    synchronized (txContext.getLock()) {
-                        txLogger.taskTrace(groupId, unitId, "checking waiting for business code finish.");
-                        txContext.getLock().wait();
-                    }
-                }
-                int state = reliableMessenger.askTransactionState(groupId, unitId);
-                txLogger.taskTrace(groupId, unitId, "ask transaction state {}", state);
-                if (state == -1) {
-                    txLogger.error(this.getClass().getSimpleName(), "delay clean transaction error.");
-                    onAskTransactionStateException(groupId, unitId, transactionType);
-                } else {
-                    transactionCleanTemplate.clean(groupId, unitId, transactionType, state);
-                    aspectLogger.clearLog(groupId, unitId);
-                }
-
-            } catch (RpcException e) {
-                onAskTransactionStateException(groupId, unitId, transactionType);
-            } catch (TransactionClearException | InterruptedException e) {
-                txLogger.error(this.getClass().getSimpleName(), "{} clean transaction error.", transactionType);
-            }
-        }, clientConfig.getDtxTime(), TimeUnit.MILLISECONDS);
-        delayTasks.put(groupId + unitId, scheduledFuture);
-    }
-```
-
-7、DefaultNotifiedUnitService，接受TM事务通知
-```
-    @Override
-    public Serializable execute(TransactionCmd transactionCmd) throws TxClientException {
-        try {
-            NotifyUnitParams notifyUnitParams = transactionCmd.getMsg().loadBean(NotifyUnitParams.class);
-            // 保证业务线程执行完毕后执行事务清理操作
-            TxContext txContext = globalContext.txContext(transactionCmd.getGroupId());
-            if (Objects.nonNull(txContext)) {
-                synchronized (txContext.getLock()) {
-                    txLogger.txTrace(transactionCmd.getGroupId(), notifyUnitParams.getUnitId(),
-                            "clean transaction cmd waiting for business code finish.");
-                    txContext.getLock().wait();
-                }
-            }
-            // 事务清理操作
-            transactionCleanTemplate.clean(
-                    notifyUnitParams.getGroupId(),
-                    notifyUnitParams.getUnitId(),
-                    notifyUnitParams.getUnitType(),
-                    notifyUnitParams.getState());
-            return true;
-        } catch (TransactionClearException | InterruptedException e) {
-            throw new TxClientException(e);
-        }
-    }
-```
-
-## 2. TCC
-
-## 3. TXC
-
-## 4. TM & HA
-
-## 5. saga
-
-## 6. seata
+- 该模式同样对代码的嵌入性低。
+- 该模式仅限于对支持SQL方式的模块支持。
+- 该模式由于每次执行SQL之前需要先查询影响数据，因此相比LCN模式消耗资源与时间要多。
+- 该模式不会占用数据库的连接资源。

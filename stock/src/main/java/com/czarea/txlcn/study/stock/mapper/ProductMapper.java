@@ -13,4 +13,7 @@ public interface ProductMapper extends BaseMapper<Product> {
 
     @Update("update t_product t set t.store=t.store-#{p.number} where t.id=#{p.id}")
     int reduct(@Param("p") ProductDTO productDTO);
+
+    @Update("update t_product t set t.store=t.store + #{p.number} where t.id=#{p.id}")
+    int cancelReduce(ProductDTO productDTO);
 }

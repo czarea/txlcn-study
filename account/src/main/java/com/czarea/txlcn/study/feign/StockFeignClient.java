@@ -13,4 +13,7 @@ public interface StockFeignClient {
 
     @PostMapping("/product/reduce")
     int reduce(@RequestBody ProductDTO productDTO);
+
+    @PostMapping("/product/tcc/reduce")
+    int tccReduce(@RequestBody ProductDTO productDTO);
 }

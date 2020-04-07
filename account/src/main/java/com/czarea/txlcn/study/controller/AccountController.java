@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class AccountController {
+
     private final AccountService accountService;
 
     public AccountController(AccountService accountService) {
@@ -18,14 +19,20 @@ public class AccountController {
     }
 
     @RequestMapping("/consume")
-    public String consume(Long userId, Double amount,Long productId) throws IllegalAccessException {
-        accountService.consume(amount, userId,productId);
+    public String consume(Long userId, Double amount, Long productId) throws IllegalAccessException {
+        accountService.consume(amount, userId, productId);
         return "OK";
     }
 
     @RequestMapping("/tcc/consume")
-    public String tccConsume(Long userId, Double amount,Long productId) throws IllegalAccessException {
-        accountService.tccConsume(amount, userId,productId);
+    public String tccConsume(Long userId, Double amount, Long productId) throws IllegalAccessException {
+        accountService.tccConsume(amount, userId, productId);
+        return "OK";
+    }
+
+    @RequestMapping("/txc/consume")
+    public String txcConsume(Long userId, Double amount, Long productId) throws IllegalAccessException {
+        accountService.txcConsume(amount, userId, productId);
         return "OK";
     }
 

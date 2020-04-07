@@ -13,4 +13,7 @@ public interface MemberFeignClient {
 
     @PostMapping("/member/point/add")
     int addPoint(@RequestBody PointDTO point);
+
+    @PostMapping("/member/point/txc/add")
+    int txcAddPoint(@RequestBody PointDTO point);
 }

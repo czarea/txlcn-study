@@ -8,4 +8,5 @@ import com.czarea.txlcn.study.member.entity.Point;
  */
 public interface PointService extends IService<Point> {
 
+    int txcSave(Point point);
 }

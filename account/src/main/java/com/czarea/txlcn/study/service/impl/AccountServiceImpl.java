@@ -26,7 +26,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         this.stockFeignClient = stockFeignClient;
     }
 
-    @Transactional
     @LcnTransaction
     @Override
     public void consume(double amount, Long userId, Long productId) throws IllegalAccessException {
@@ -67,6 +66,24 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         stockFeignClient.tccReduce(productDTO);
 
         if (point % 7 == 0) {
+            throw new IllegalAccessException("mock exception!");
+        }
+    }
+
+    @LcnTransaction
+    @Override
+    public void txcConsume(Double amount, Long userId, Long productId) throws IllegalAccessException {
+        Account entity = new Account();
+        entity.setAmount(amount);
+        entity.setUserId(userId);
+        baseMapper.insert(entity);
+
+        PointDTO point = new PointDTO();
+        point.setUserId(userId);
+        point.setPoint((long) (amount * 100));
+        memberFeignClient.txcAddPoint(point);
+
+        if (point.getPoint() % 7 == 0) {
             throw new IllegalAccessException("mock exception!");
         }
     }

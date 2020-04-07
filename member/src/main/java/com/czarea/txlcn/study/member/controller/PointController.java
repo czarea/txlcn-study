@@ -34,4 +34,12 @@ public class PointController {
         }
         return pointService.save(point) ? 1 : 0;
     }
+
+    @PostMapping("/txc/add")
+    public int txcAdd(@RequestBody Point point) throws Exception {
+        if (point.getPoint() % 3 == 0) {
+            throw new Exception("throw exception !");
+        }
+        return pointService.txcSave(point);
+    }
 }

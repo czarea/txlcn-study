@@ -11,4 +11,6 @@ public interface AccountService extends IService<Account> {
     void consume(double amount, Long userId, Long productId) throws IllegalAccessException;
 
     void tccConsume(Double amount, Long userId, Long productId) throws IllegalAccessException;
+
+    void txcConsume(Double amount, Long userId, Long productId) throws IllegalAccessException;
 }
